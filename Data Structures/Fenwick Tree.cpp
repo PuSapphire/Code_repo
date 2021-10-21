@@ -7,7 +7,7 @@ int bit[SZ+1]
 
 void update (int i, int v) {
   for (; i <= SZ; i += i&-i)
-    bit[u] += v;
+    bit[i] += v;
 };
 
 int query (int i) {
