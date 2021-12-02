@@ -2,54 +2,51 @@
 #include <bitset>
 using namespace std;
  
-bitset<int(1e7)> set;
-default_random_engine DRE;
-uniform_int_distribution<int> gen(1, 1e7);
+random_device seed;
+mt19937 mt(seed());
 
 struct node {
   int p, k, len=1;
   node *l, *r;
   node (int s) {
     k = s; l = r = NULL;
-    do { p = gen(DRE); } while (set[p]);
-    set[p] = 1;
+    p = mt();
   }
 } *top=NULL;
 
 int sz(node *n) { return n ? n->len : 0; }
-void upd(node *t) { if(t) t->len = 1+sz(t->l)+sz(t->r); }
+void pull(node *t) { if(t) t->len = 1+sz(t->l)+sz(t->r); }
 
-void split(node *t, int k, node *&l, node *&r) {
+void cut(node *t, int k, node *&l, node *&r) {
   if (!t) l = r = NULL;
   else if (t->k > k)
-    split(t->l, k, l, t->l), r=t, upd(r);
+    cut(t->l, k, l, t->l), r=t, pull(r);
   else 
-    split(t->r, k, t->r, r), l=t, upd(l);
+    cut(t->r, k, t->r, r), l=t, pull(l);
 }
-void merge(node *&t, node *l, node *r) {
+void tie(node *&t, node *l, node *r) {
   if (!l) t = r;
   else if (!r) t = l;
-  else if (l->p > r->p) merge(l->r, l->r, r), t=l;
-  else merge(r->l, l, r->l), t=r;
-  upd(t);
+  else if (l->p > r->p) tie(l->r, l->r, r), t=l;
+  else tie(r->l, l, r->l), t=r;
+  pull(t);
 }
 void ins(node *&t, node *it) {
   if (!t) t = it;
   else if (t->p < it->p) split(t, it->k, it->l, it->r), t=it;
   else ins((t->k > it->k)? t->l : t->r, it);
-  upd(t);
+  pull(t);
 }
 bool del(node *&t, int k) {
   if (!t) return 0;
   if (t->k == k) {
     node *path = t;
-    merge(t, t->l, t->r);
-    set[path->p] = 0;
+    tie(t, t->l, t->r);
     delete path;
     return 1;
   }
   bool b = del((t->k > k)? t->l : t->r, k);
-  if (b) upd(t); return b;
+  if (b) pull(t); return b;
 }
 int kth(node *t, int k) {
   if (!t) return -1;
