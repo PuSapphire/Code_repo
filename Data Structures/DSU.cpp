@@ -3,23 +3,24 @@
 using namespace std;
 
 class dsu {
-  vector<int> root, sz;
+  vector<int> rt, sz;
 
   public:
   //function
   int find(int i) { 
-    return (i == root[i])? i : root[i]=find(root[i]); 
+    if (i == rt[i]) return i;
+    return i = find(rt[i]);
   }
   void tie(int i, int j) {
     i = find(i); j = find(j);
     if (i == j) return;
-    if (sz[i] > sz[j]) swap(i, j);
-    root[i] = j; sz[j] += sz[i];
+    if (sz[i] < sz[j]) swap(i, j);
+    rt[j] = i; sz[i] += sz[j];
   }
   //constructor
   dsu(int n) { 
-    root.resize(n); 
-    sz.resize(n, 1); 
+    rt.resize(n); 
+    sz.assign(n, 1); 
     for (int i=0; i<n; ++i) root[i] = i;
   }
 };
