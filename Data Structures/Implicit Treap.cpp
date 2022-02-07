@@ -37,7 +37,7 @@ void cut(node *t, node *&l, node *&r, int idx, int cs=0) {
   push(t);
   if (!t) return void(l = r = 0);
   int ik = cs + sz(t->l);
-  if (ik >= idx) {
+  if (idx <= ik) {
     cut(t->l, l, t->l, idx, cs);
     r = t; pull(r);
   } else {
