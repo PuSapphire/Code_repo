@@ -9,7 +9,7 @@ template <typename T> using pr = pair<T, T>;
 #define sd  second
 #define pb  push_back
 
-//Ex. find mode(number of most occurences)
+//Ex. find frequency & equivalences of modes(number of most occurences)
 const int N = 1e5+5, S = sqrt(N);
 int n, q, arr[N];
 pr<int> sol[N];
