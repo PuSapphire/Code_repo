@@ -1,5 +1,4 @@
 #include <random>
-#include <bitset>
 using namespace std;
  
 random_device seed;
