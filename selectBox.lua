@@ -1,5 +1,5 @@
 
-
+--a module for mediawiki
 --requires Template:Tabs
 --[[
 selectHeight    = nil:  max select box height. enables overflow.
