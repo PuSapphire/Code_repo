@@ -1,87 +1,105 @@
+
+/*  ########  *\
+隱式樹堆積 Implicit Treap
+時間複雜度: 
+    區間更新 = O(log n)
+    區間查詢 = O(log n)
+資節用途: 更廣的區間操作，缺點是常數大
+區間操作如循環位移、區間裁剪、區間反轉等
+以區間加值區間和，及一些其他簡單的操作為例
+
+實作方面，split(l, r, i)後l包含[0..i)，r包含[i..n]
+\*  ########  */
 #include <iostream>
 #include <algorithm>
 #include <random>
 using namespace std;
 
+using ll = long long;
+
 random_device seed;
-mt19937 mt(seed());
-typedef long long ll;
-
-struct node {
-  ll v, p, len=1;
-  ll mn; 
-  ll lz = 9e18;
-  node *l, *r;
-  node (ll x) {
-    v = mn = x; p = mt();
-    l = r = 0;
-  }
-} *top = 0; 
-
-int sz(node *t) { return t ? t->len : 0; }
-ll nv(node *t) { return t ? t->v : 9e18;}
-void pull(node *t) {
-  if (!t) return;
-  t->mn = min(t->mn, min(nv(t->l), nv(t->r)));
-  t->len = 1 + sz(t->l) + sz(t->r);
+mt19937 rng(seed());
+struct Node {
+    ll v, rv, lz=0;
+    int sz=1, p=rng();
+    Node *l=0, *r=0;
+    Node (){};
+    Node (ll x) { rv = v = x; }
+} *top = 0;
+inline ll gs(Node*t) { return t?t->sz:0; } //提取區間大小
+inline ll gv(Node*t) { return t?t->rv:0; } //提取區間值
+inline void push(Node *t) { //懶標下推
+    if (!t || !t->lz) return;
+    t->v  += t->lz;
+    t->rv += t->lz * t->sz;
+    if (t->l) t->l->lz += t->lz;
+    if (t->r) t->r->lz += t->lz;
+    t->lz = 0;
 }
-void push(node *t) {
-  if (!t || t->lz == 9e18) return;
-  t->mn = min(t->mn, t->lz);
-  if (t->l) t->l->lz = min(t->l->lz, t->lz);
-  if (t->r) t->r->lz = min(t->r->lz, t->lz);
-  t->lz = 9e18;
+inline void pull(Node *t) { //上拉更新
+    if (!t) return;
+    push(t->l); push(t->r);
+    t->rv = t->v + gv(t->l) + gv(t->r);
+    t->sz = 1 + gs(t->l) + gs(t->r);
 }
-
-void cut(node *t, node *&l, node *&r, int idx, int cs=0) {
-  push(t);
-  if (!t) return void(l = r = 0);
-  int ik = cs + sz(t->l);
-  if (idx <= ik) {
-    cut(t->l, l, t->l, idx, cs);
-    r = t; pull(r);
-  } else {
-    cut(t->r, t->r, r, idx, ik+1);
-    l = t; pull(l);
-  }
+void split(Node *t, Node *&l, Node *&r, ll i, ll cs=0) { //Treap分裂
+    if (!t) return void(l = r = 0);
+    push(t);
+    ll ik = cs + gs(t->l);
+    if (ik >= i) split(t->l, l, t->l, i, cs), r=t;
+    else split(t->r, t->r, r, i, ik+1), l=t;
+    pull(t);
 }
-void tie(node *&t, node *l, node *r) {
-  push(l); push(r);
-  if (!l) t = r;
-  else if (!r) t = l;
-  else if (l->p > r->p) tie(l->r, l->r, r), t=l;
-  else tie(r->l, l, r->l), t=r;
-  pull(t);
+void merge(Node *&t, Node *l, Node *r) { //Treap合併
+    push(l); push(r);
+    if (!l || !r) t = l?l:r;
+    else if (l->p > r->p) merge(l->r, l->r, r), t=l;
+    else merge(r->l, l, r->l), t=r;
+    pull(t);
 }
 
-void ins(ll v, int idx) {
-  if (!top) return void(top = new node(v));
-  node *l, *r;
-  cut(top, l, r, idx);
-  tie(r, new node(v), r);
-  tie(top, l, r);
-}
-void inord(node *t) {
-  if (!t) return;
-  inord(t->l);
-  cout << t->v << ' ';
-  inord(t->r);
-}
-int qry(int ql, int qr) {
-  if (ql > qr) return -1;
-  node *l, *r, *m;
-  cut(top, l, m, ql);
-  cut(m, m, r, qr-ql+1);
-  cout << "RMQ on [ "; inord(m); cout << "]: ";
-  int ans = m->mn;
-  tie(r, m, r);
-  tie(top, l, r);
-  return ans;
-}
 
-signed main() {
-  for (int i=0; i<10; ++i) ins(i, i);
-  inord(top); cout << '\n';
-  cout << qry(5, 8);
-  return 0;
+void inorder(Node *t) { //中序，即原陣列
+    if (!t) return;
+    inorder(t->l);
+    cout << t->v << ' ';
+    inorder(t->r);
+}
+void insert(ll v, int i) { //插入
+    if (!top) return void(top = new Node(v));
+    Node *l, *r;
+    split(top, l, r, i);
+    merge(r, new Node(v), r);
+    merge(top, l, r);
+}
+ll query(int ql, int qr) { //查詢
+    Node *l, *r, *q;
+    split(top, l, q, ql); //ql = [ql..n]
+    split(q, q, r, qr-ql+1); //ql = [ql..qr]
+    ll ans = q->rv;
+    merge(r, q, r);
+    merge(top, l, r);
+    return ans;
+}
+void rupdate(int ql, int qr, int k) { //更新
+    Node *l, *r, *q;
+    split(top, l, q, ql);
+    split(q, q, r, qr-ql+1);
+    q->lz += k;
+    merge(r, q, r);
+    merge(top, l, r);
+}
+void cshft(int ql, int qr, int k, char dir='l') { //循環位移
+    Node *l, *r, *q, *sl, *sr;
+    split(top, l, q, ql);
+    split(q, q, r, qr-ql+1); //q包含[ql, qr]
+
+    k = k % q->sz; //繞整圈無意義
+    if (k == 0) return;
+    if (dir == 'r') k = q->sz - k; //向右k等同於向左sz-k
+
+    split(q, sl, sr, k); //sl含[ql..ql+k)、sr含[ql+k..qr]
+    merge(q, sr, sl);
+    merge(r, q, r);
+    merge(top, l, r);
 }

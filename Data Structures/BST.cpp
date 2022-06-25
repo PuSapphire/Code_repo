@@ -1,20 +1,18 @@
 #include <iostream>
 using namespace std;
 
-struct tnode {
+struct Node {
     int key;
-    tnode *l = NULL;
-    tnode *r = NULL;
-    tnode (int num) { key = num; }
+    Node *l=0, *r=0;
 };
 
 class bst {
-    tnode *root = NULL;
+    Node *root = 0;
     int len = 0;
 
-    void rotate_r(tnode*, tnode*);
-    void inord(tnode*);
-    tnode *search(int);
+    void rotate_r(Node*, Node*);
+    void inord(Node*);
+    Node *search(int);
 
     public:
     int size() { return len; }
@@ -27,88 +25,88 @@ class bst {
 
 
 //private
-void bst::inord(tnode *node) { 
-    if (node->l) inord(node->l);
-    cout << node->key << ' '; //node->data
-    if (node->r) inord(node->r);
+void bst::inord(Node *t) { 
+    if (t->l) inord(t->l);
+    cout << t->key << ' '; //node->data
+    if (t->r) inord(t->r);
 }
 
-tnode* bst::search(int num) {
-    tnode *node = root;
-    while (node) {
-        (node->key < num)?
-        node = node->r:
-        node = node->l;
-        if (node->key == num) break;
+Node* bst::search(int num) {
+    Node *t = root;
+    while (t) {
+        (t->key < num)?
+            t = t->r:
+            t = t->l;
+        if (t->key == num) break;
     }
-    return node;
+    return t;
 }
 
 //public
 void bst::print() { if(root)inord(root); }
 
 pair<bool, int> bst::find(int key) { 
-    tnode *node = search(key);
-    if (node == NULL) return {0, 0};
-    else return {1, node->key}; //node->data
+    Node *t = search(key);
+    if (t == 0) return {0, 0};
+    else return {1, t->key}; //node->data
 };
 
 bool bst::ins(int num) {
-    tnode *node = root;
-    tnode *par = 0;
-    while (node) {
-        par = node;
-        if (node->key == num) return 0;
-        if (node->key < num) node = node->r;
-        else node = node->l;
+    Node *t = root;
+    Node *par = 0;
+    while (t) {
+        par = t;
+        if (t->key == num) return 0;
+        if (t->key < num) t = t->r;
+        else t = t->l;
     }
     ++len;
-    node = new tnode(num);
+    t = new Node{num};
     if (!par) 
-        this->root = node;
+        this->root = t;
     else 
         (par->key > num)? 
-        par->l = node:
-        par->r = node;
+            par->l = t:
+            par->r = t;
     return 1;
 }
 
 bool bst::del(int num) {
-    tnode *del_node = root;
-    tnode *par = NULL;
-    while (del_node) {
-        if (del_node->key == num) break;
-        par = del_node;
-        (del_node->key > num)?
-        del_node = del_node->l:
-        del_node = del_node->r;
+    Node *dt = root;
+    Node *par = NULL;
+    while (dt) {
+        if (dt->key == num) break;
+        par = dt;
+        (dt->key > num)?
+        dt = dt->l:
+        dt = dt->r;
     }
     //node not found
-    if (del_node == NULL) return 0;
+    if (dt == NULL) return 0;
 
     --len;
     //2 children
-    if (del_node->l && del_node->r) { 
+    if (dt->l && dt->r) { 
         //swap to deleting replacement
         //replace = max in l || min in r
-        par = del_node;
-        tnode *replace = del_node->l;
+        par = dt;
+        Node *replace = dt->l;
         while (replace->r) {
             par = replace;
             replace = replace->r;
         }
-        del_node->key = replace->key;
-        del_node = replace;
+        dt->key = replace->key;
+        dt = replace;
     }
 
     //may be NULL
-    tnode *del = del_node -> l; 
-    if (!del) del = del_node -> r;
+    Node *del = dt -> l; 
+    if (!del) del = dt -> r;
 
-    par->l == del_node?
-    par->l = del:
-    par->r = del;
+    par->l == dt?
+        par->l = del:
+        par->r = del;
 
-    delete del_node;
+    delete dt;
     return 1;
 }

@@ -9,8 +9,10 @@
 #include <algorithm>
 #include <cmath>
 #include <vector>
+using namespace std;
+
 const int N = 8e4, Q = 8e4;
-const int S = std::sqrt(N);
+const int S = sqrt(N);
 struct Query {
     int l, r, lb, idx;
     bool operator< (Query const &rhs) {
@@ -33,16 +35,16 @@ int sol(int v) {
     return v;
 }
 
-std::vector<int> process(std::vector<std::pair<int, int>> &qry) {
-    std::vector<Query> Mo;
+vector<int> process(vector<pair<int, int>> &qry) {
+    vector<Query> Mo;
     for (int i=0; i<qry.size(); ++i) {
         int l = qry[i].first;
         int r = qry[i].second;
         Mo.push_back({l, r, l/S, i});
     }
 
-    std::vector<int> ans(qry.size());
-    std::sort(Mo.begin(), Mo.end());
+    vector<int> ans(qry.size());
+    sort(Mo.begin(), Mo.end());
     int cl=1, cr=0, cur=0;
     for (Query const &q : Mo) {
         while (cl > q.l) inc(cur, --cl);
